@@ -22,16 +22,17 @@ def clip_video():
     
     try:
         # Step 1: Download specific segment in 1080p using yt-dlp
-        # --download-sections allows downloading ONLY the specific time frame, saving server memory
-      download_cmd = [
-    "yt-dlp",
-    "--cookies", "cookies.txt",
-    "-f", "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
-    "--download-sections", f"*{start_time}-{end_time}",
-    "-o", f"raw_{filename}",
-    url
-]
+        download_cmd = [
+            "yt-dlp",
+            "--cookies", "cookies.txt",
+            "-f", "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
+            "--download-sections", f"*{start_time}-{end_time}",
+            "-o", f"raw_{filename}",
+            url
+        ]
         subprocess.run(download_cmd, check=True)
+
+        # Step 2: Apply FFmpeg formatting (Crop to 9:16 if requested)
 
         # Step 2: Apply FFmpeg formatting (Crop to 9:16 if requested)
         if ratio == "9:16":
