@@ -27,6 +27,8 @@ def clip_video():
             "--cookies", "cookies.txt",
             "-f", "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
             "--download-sections", f"*{start_time}-{end_time}",
+            "--force-keyframes-at-cuts",
+            "--extractor-args", "youtube:skip=hls",
             "-o", f"raw_{filename}",
             url
         ]
