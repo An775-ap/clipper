@@ -22,10 +22,12 @@ def clip_video():
     
     try:
         # Step 1: Download the entire video using yt-dlp (Prevents ffmpeg 403 network errors)
+        # Step 1: Download the entire video using yt-dlp (Spoofing Android client to bypass 403s)
         download_cmd = [
             "yt-dlp",
             "--cookies", "cookies.txt",
             "-f", "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
+            "--extractor-args", "youtube:player_client=android",
             "-o", f"full_{filename}",
             url
         ]
