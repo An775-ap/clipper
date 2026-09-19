@@ -21,45 +21,46 @@ def clip_video():
     filename = f"{uuid.uuid4()}.mp4"
     
     try:
-        # Step 1: Download specific segment in 1080p using yt-dlp
+        # Step 1: Download the entire video using yt-dlp (Prevents ffmpeg 403 network errors)
         download_cmd = [
             "yt-dlp",
             "--cookies", "cookies.txt",
             "-f", "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]",
-            "--download-sections", f"*{start_time}-{end_time}",
-            "--force-keyframes-at-cuts",
-            "--extractor-args", "youtube:skip=hls",
-            "-o", f"raw_{filename}",
+            "-o", f"full_{filename}",
             url
         ]
         subprocess.run(download_cmd, check=True)
 
-        # Step 2: Apply FFmpeg formatting (Crop to 9:16 if requested)
-
-        # Step 2: Apply FFmpeg formatting (Crop to 9:16 if requested)
+        # Step 2: Use FFmpeg offline to Trim and Crop the local file
         if ratio == "9:16":
-            # Crop the center of the video for Shorts/Reels
+            # Trim the times and Crop the center for Shorts/Reels
             ffmpeg_cmd = [
-                "ffmpeg", "-i", f"raw_{filename}",
+                "ffmpeg", "-i", f"full_{filename}",
+                "-ss", start_time, "-to", end_time,
                 "-vf", "crop=ih*(9/16):ih", 
                 "-c:a", "copy",
                 filename
             ]
         else:
-            # Just rename/encode if 16:9
-            ffmpeg_cmd = ["ffmpeg", "-i", f"raw_{filename}", "-c", "copy", filename]
+            # Just Trim the times for 16:9
+            ffmpeg_cmd = [
+                "ffmpeg", "-i", f"full_{filename}",
+                "-ss", start_time, "-to", end_time,
+                "-c:v", "copy", "-c:a", "copy",
+                filename
+            ]
 
         subprocess.run(ffmpeg_cmd, check=True)
 
-        # Step 3: Send file to user
+        # Step 3: Send the final clipped file to user
         response = send_file(filename, as_attachment=True)
         return response
 
     except subprocess.CalledProcessError as e:
-        return jsonify({"error": "Failed to process video. Check timestamps or URL."}), 500
+        return jsonify({"error": "Failed to process video. Check server logs."}), 500
     finally:
-        # Cleanup server storage so it doesn't run out of space
-        if os.path.exists(f"raw_{filename}"): os.remove(f"raw_{filename}")
+        # Cleanup ALL server storage so Render doesn't run out of free space
+        if os.path.exists(f"full_{filename}"): os.remove(f"full_{filename}")
         if os.path.exists(filename): os.remove(filename)
 
 if __name__ == '__main__':
